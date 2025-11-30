@@ -38,7 +38,7 @@ namespace HotelManagement.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RoomNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Type = table.Column<int>(type: "int", nullable: false),
+                    RoomType = table.Column<int>(type: "int", nullable: false),
                     PricePerNight = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Capacity = table.Column<int>(type: "int", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
@@ -82,7 +82,7 @@ namespace HotelManagement.Migrations
 
             migrationBuilder.InsertData(
                 table: "Rooms",
-                columns: new[] { "Id", "Capacity", "Description", "IsAvailable", "PricePerNight", "RoomNumber", "Type" },
+                columns: new[] { "Id", "Capacity", "Description", "IsAvailable", "PricePerNight", "RoomNumber", "RoomType" },
                 values: new object[,]
                 {
                     { 1, 1, "Single room with one bed.", true, 100m, "101", 0 },

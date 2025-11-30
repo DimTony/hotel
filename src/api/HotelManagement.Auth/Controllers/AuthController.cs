@@ -1,0 +1,138 @@
+using HotelManagement.Auth.DTOs;
+using HotelManagement.Auth.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace HotelManagement.Auth.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
+    {
+        _authService = authService;
+    }
+
+    /// <summary>
+    /// Register a new user
+    /// </summary>
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _authService.RegisterAsync(request);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Login with email and password
+    /// </summary>
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _authService.LoginAsync(request);
+
+        if (!result.Success)
+        {
+            return Unauthorized(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Refresh access token using refresh token
+    /// </summary>
+    [HttpPost("refresh")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _authService.RefreshTokenAsync(request.RefreshToken);
+
+        if (!result.Success)
+        {
+            return Unauthorized(result);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Revoke/logout using refresh token
+    /// </summary>
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _authService.RevokeTokenAsync(request.RefreshToken);
+
+        if (!result)
+        {
+            return BadRequest(new { success = false, message = "Invalid or already revoked token" });
+        }
+
+        return Ok(new { success = true, message = "Logged out successfully" });
+    }
+
+    /// <summary>
+    /// Validate access token and get user info (protected endpoint example)
+    /// </summary>
+    [HttpGet("validate")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult ValidateToken()
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+        return Ok(new
+        {
+            success = true,
+            message = "Token is valid",
+            user = new
+            {
+                id = userId,
+                email = email,
+                role = role
+            }
+        });
+    }
+}
