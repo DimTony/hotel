@@ -319,7 +319,7 @@ export interface UserTableFilter {
     date?: string;
     startDate?: string;
     endDate?: string;
-    globalSearch?: string;
+    search?: string;
     status?: string;
     tab?: string;
   };
