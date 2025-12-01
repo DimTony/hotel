@@ -79,21 +79,21 @@ const UserManagement = () => {
       search: searchInput,
     }));
 
-    setCurrentPage(1);
-    fetchData(); // force reload with new filters
+    // setCurrentPage(1);
+    // fetchData(); // force reload with new filters
   };
 
   const handleResetSearch = () => {
     setSearchInput(""); // clear input
 
-    setFilters((prev) => ({
-      ...prev,
+    setFilters({
+      ...filters,
       search: "",
-    }));
+    });
 
-    setCurrentPage(1);
+    // setCurrentPage(1);
 
-    fetchData(); // refresh table with no search
+    // fetchData(); // refresh table with no search
   };
 
   const handleSearchInput = (value: string) => {
