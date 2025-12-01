@@ -201,10 +201,20 @@ export class ApiService {
 
   async fetchAllUsers(filter: UserTableFilter) {
     try {
+      const params: any = {
+        PageNumber: filter.pageNumber,
+        PageSize: filter.pageSize,
+      };
+
+      if (filter.filter?.search) {
+        params.SearchTerm = filter.filter.search;
+      } 
+
+      console.log("PAYLOAD:", params);
       const response = await this.auth.get(
         Endpoints.Authentication.getAllUsers,
         {
-          params: filter,
+          params,
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
           },
