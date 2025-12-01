@@ -2,7 +2,7 @@
 
 import { useTableData } from "@/hooks/useTableData";
 import { useUserService } from "@/hooks/useUserService";
-import { Eye, Plus, Search, SquarePen, Trash2 } from "lucide-react";
+import { Eye, Plus, RotateCcw, Search, SquarePen, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Table } from "../components/Table";
 import { TableControls } from "../components/TableControls";
@@ -13,11 +13,11 @@ import { toast } from "sonner";
 import { useStatusModal } from "@/hooks/useStatusModal";
 
 interface UserFilters {
-  status: string;
-  startDate: string;
-  endDate: string;
-  tab: "Pending" | "Claimed";
-  globalSearch: string;
+  // status: string;
+  // startDate: string;
+  // endDate: string;
+  // tab: "Pending" | "Claimed";
+  search: string;
 }
 
 interface User {
@@ -40,6 +40,7 @@ const UserManagement = () => {
   const { openConfirmationModal } = useConfirmationModal();
   const { showStatus, closeStatus } = useStatusModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   // Use the reusable paginated data hook
@@ -58,11 +59,11 @@ const UserManagement = () => {
   } = useTableData<User, UserFilters>(fetchAllUsers, {
     pageSize: 10,
     initialFilters: {
-      status: "",
-      startDate: "",
-      endDate: "",
-      tab: "Pending",
-      globalSearch: "",
+      search: "",
+      // status: "",
+      // startDate: "",
+      // endDate: "",
+      // tab: "Pending",
     },
   });
 
@@ -72,8 +73,31 @@ const UserManagement = () => {
   }, [currentPage]);
 
   // Handle search
-  const handleSearch = (searchValue: string) => {
-    setFilters((prev) => ({ ...prev, globalSearch: searchValue }));
+  const handleSearch = () => {
+    setFilters((prev) => ({
+      ...prev,
+      search: searchInput,
+    }));
+
+    setCurrentPage(1);
+    fetchData(); // force reload with new filters
+  };
+
+  const handleResetSearch = () => {
+    setSearchInput(""); // clear input
+
+    setFilters((prev) => ({
+      ...prev,
+      search: "",
+    }));
+
+    setCurrentPage(1);
+
+    fetchData(); // refresh table with no search
+  };
+
+  const handleSearchInput = (value: string) => {
+    setSearchInput(value);
   };
 
   const handleAddUser = () => {
@@ -267,25 +291,41 @@ const UserManagement = () => {
           <div className="relative flex justify-between backdrop-blur-xl bg-white/10 rounded-3xl p-4 border border-white/20 shadow-2xl">
             <span>User Management</span>
 
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search
-                  size={14}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
-                />
+            <div className="flex items-center gap-2">
+              <div className="relative flex items-center">
                 <input
                   type="text"
                   placeholder="Search users..."
-                  value={filters.globalSearch}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-40 pl-7 pr-2 py-1 border border-gray-300 rounded-md text-sm text-black
-                 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={searchInput}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  className="w-48 pl-2 pr-10 py-1 border border-gray-300 rounded-md text-sm text-white 
+        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-transparent"
                 />
+
+                <button
+                  onClick={handleSearch}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 
+        p-1 rounded-md text-white hover:bg-white/30 transition"
+                >
+                  <Search size={14} />
+                </button>
               </div>
+
+              {filters.search && (
+                <button
+                  onClick={handleResetSearch}
+                  className="px-2 py-1 text-xs backdrop-blur-xl bg-white/10 
+      text-white rounded-md hover:bg-white/65 hover:text-black 
+      cursor-pointer transition-all duration-300"
+                >
+                  <RotateCcw size={14} />
+                </button>
+              )}
 
               <button
                 onClick={handleAddUser}
-                className="flex items-center gap-1 px-2 py-1 backdrop-blur-xl bg-white/10 text-white rounded-md text-xs hover:bg-white/65 hover:text-black cursor-pointer transition-all duration-300"
+                className="flex items-center gap-1 px-2 py-1 backdrop-blur-xl bg-white/10 text-white 
+      rounded-md text-xs hover:bg-white/65 hover:text-black cursor-pointer transition-all duration-300"
               >
                 <Plus size={14} />
                 Add User
