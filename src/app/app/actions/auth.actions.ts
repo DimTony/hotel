@@ -8,14 +8,18 @@ interface ValidateCredentialsInput {
 }
 
 interface ValidateCredentialsResponse {
-  httpStatusCode: number;
+  success: boolean;
   message: string;
-  errors: any[];
-  data: {
-    username: string;
-    code: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  user: {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
   };
-  totalCount: null;
 }
 
 export async function validateCredentials(
@@ -29,7 +33,9 @@ export async function validateCredentials(
       password: input.password,
     };
 
-    const response = await apiService.validateUserForEntrust(payload);
+    const response = await apiService.validateUser(payload);
+
+    // console.log("RESPONSEAPI", response)
 
     return response;
   } catch (error: any) {

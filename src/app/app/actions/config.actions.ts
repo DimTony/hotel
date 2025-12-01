@@ -3,7 +3,7 @@
 interface ConfigResponse {
   credentialsMode: string;
   azureAdEnabled: string;
-  adGroups: string;
+  // adGroups: string;
 }
 
 export async function getConfig(): Promise<
@@ -13,7 +13,7 @@ export async function getConfig(): Promise<
     const requiredEnvVars = {
       CREDENTIALS_MODE: process.env.CREDENTIALS_MODE,
       AZURE_AD_ENABLED: process.env.AZURE_AD_ENABLED,
-      AUTHORIZED_GROUPS: process.env.AUTHORIZED_GROUPS,
+      // AUTHORIZED_GROUPS: process.env.AUTHORIZED_GROUPS,
     };
 
     const missingVars = Object.entries(requiredEnvVars)
@@ -32,7 +32,7 @@ export async function getConfig(): Promise<
     const config: ConfigResponse = {
       credentialsMode: requiredEnvVars.CREDENTIALS_MODE!,
       azureAdEnabled: requiredEnvVars.AZURE_AD_ENABLED!,
-      adGroups: requiredEnvVars.AUTHORIZED_GROUPS!,
+      // adGroups: requiredEnvVars.AUTHORIZED_GROUPS!,
     };
 
     return { success: true, data: config };

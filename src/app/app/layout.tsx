@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Providers from "./providers";
+import AppProviders from "./providers";
 
 export const metadata: Metadata = {
-  title: "Omnichannel Customer Management",
-  description:
-    "Manage customer interactions across multiple channels seamlessly.",
+  title: "Hotel Management",
+  description: "Manage Your Hotel.",
 };
 
 export default function RootLayout({
@@ -29,7 +28,7 @@ export default function RootLayout({
         />
       </head>
       <body className={` antialiased`}>
-        <Providers>{children}</Providers>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

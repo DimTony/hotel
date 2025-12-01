@@ -1,9 +1,13 @@
-import headers from "./headers.service";
+import headers, {
+  bookingHeaders,
+  middlewareHeaders,
+  roomHeaders,
+} from "./headers.service";
 import * as https from "node:https";
 import Endpoints, { Backend } from "../_endpoints/api.endpoint";
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { AuthenticationRequest, EntrustRequest } from "../_models/api.model";
-import { ApiResponse } from "@/lib/types";
+import { ApiResponse, CreateUserPayload, UserTableFilter } from "@/lib/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./auth.service";
 
@@ -40,65 +44,111 @@ export function handleError(err: AxiosError) {
 }
 
 export class ApiService {
+  auth!: AxiosInstance;
+  room!: AxiosInstance;
+  booking!: AxiosInstance;
   http!: AxiosInstance;
   private accessToken: string;
 
   constructor(accessToken: string = "") {
     this.accessToken = accessToken;
+    this.setupAuthClient();
+    this.setupRoomClient();
+    this.setupBookingClient();
     this.setupHttpClient();
   }
 
-  private base = axios.create({
-    baseURL: process.env.NEXT_AD_MIDDLEWARE_URL as string,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-cache",
-      "Subscription-Key": process.env.NEXT_SECRET_MIDDLEWARE_SUBKEY as string,
-    },
-  });
-
-  private setupHttpClient() {
-    const authHeaders = {
-      ...headers,
-      ...(this.accessToken && { Authorization: `Bearer ${this.accessToken}` }),
-    };
-
-    this.http = axios.create({
-      baseURL: Backend.base,
-      headers: authHeaders,
+  private setupAuthClient() {
+    this.auth = axios.create({
+      baseURL: Backend.auth,
+      headers: {
+        ...middlewareHeaders,
+      },
       httpsAgent: new https.Agent({
         rejectUnauthorized: process.env.NODE_ENV === "production",
       }),
     });
 
-    this.http.interceptors.request.use((request) => {
+    // Inject token dynamically
+    this.auth.interceptors.request.use((req) => {
       if (this.accessToken) {
-        request.headers.Authorization = `Bearer ${this.accessToken}`;
+        req.headers.Authorization = `Bearer ${this.accessToken}`;
       }
 
-      if (request.url?.includes("deliverables")) {
-      }
-      return request;
+      // console.log("Outgoing Auth Header:", req.headers.Authorization);
+
+      return req;
+    });
+  }
+
+  private setupRoomClient() {
+    this.room = axios.create({
+      baseURL: Backend.room,
+      headers: {
+        ...roomHeaders,
+      },
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: process.env.NODE_ENV === "production",
+      }),
     });
 
-    this.http.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      (error) => {
-        return Promise.reject(error);
+    // Inject token dynamically
+    this.room.interceptors.request.use((req) => {
+      if (this.accessToken) {
+        req.headers.Authorization = `Bearer ${this.accessToken}`;
       }
-    );
+      return req;
+    });
+  }
+
+  private setupBookingClient() {
+    this.booking = axios.create({
+      baseURL: Backend.booking,
+      headers: {
+        ...bookingHeaders,
+      },
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: process.env.NODE_ENV === "production",
+      }),
+    });
+
+    // Inject token dynamically
+    this.booking.interceptors.request.use((req) => {
+      if (this.accessToken) {
+        req.headers.Authorization = `Bearer ${this.accessToken}`;
+      }
+      return req;
+    });
+  }
+
+  private setupHttpClient() {
+    this.http = axios.create({
+      baseURL: Backend.auth,
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: process.env.NODE_ENV === "production",
+      }),
+    });
+
+    // Inject token dynamically
+    this.http.interceptors.request.use((req) => {
+      if (this.accessToken) {
+        req.headers.Authorization = `Bearer ${this.accessToken}`;
+      }
+      return req;
+    });
   }
 
   updateAccessToken(newToken: string) {
     this.accessToken = newToken;
-    this.setupHttpClient();
+    // No need to recreate clients — interceptors will use the new token
   }
 
   clearAccessToken() {
     this.accessToken = "";
-    this.setupHttpClient();
   }
 
   static async createWithSession(): Promise<ApiService> {
@@ -107,28 +157,24 @@ export class ApiService {
     return new ApiService(accessToken);
   }
 
-  static createWithToken(accessToken: string): ApiService {
-    return new ApiService(accessToken);
-  }
-
-  async validateUserForEntrust(data: AuthenticationRequest) {
+  async validateUser(data: AuthenticationRequest) {
     try {
-      const response = await this.http.post(
+      const response = await this.auth.post(
         Endpoints.Authentication.login,
         data
       );
 
       return response.data as any;
     } catch (error: any) {
-      console.error("[validateUserForEntrust] Authentication error:", error);
+      console.error("[validateUser] Authentication error:", error);
       throw handleError(error);
     }
   }
 
   async authenticateEntrust(data: EntrustRequest) {
     try {
-      const response = await this.http.post(
-        Endpoints.Authentication.validateToken,
+      const response = await this.auth.post(
+        Endpoints.Authentication.validateADuser,
         data
       );
 
@@ -140,7 +186,7 @@ export class ApiService {
 
   async logout() {
     try {
-      const response = await this.http.post(Endpoints.Authentication.logout);
+      const response = await this.auth.post(Endpoints.Authentication.logout);
 
       return response.data;
     } catch (error) {
@@ -151,5 +197,48 @@ export class ApiService {
 
   isAuthenticated(): boolean {
     return !!this.accessToken;
+  }
+
+  async fetchAllUsers(filter: UserTableFilter) {
+    try {
+      const response = await this.auth.get(
+        Endpoints.Authentication.getAllUsers,
+        {
+          params: filter,
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }
+      );
+
+      return response.data as any;
+    } catch (error: any) {
+      // console.error("[fetchAllUsers] error:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Status:", error.response?.status);
+        console.error("Headers:", error.response?.headers);
+      }
+      throw handleError(error);
+    }
+  }
+
+  async createNewUser(data: CreateUserPayload) {
+    try {
+      const response = await this.auth.post(
+        Endpoints.Authentication.createUser,
+        data
+      );
+
+      return response.data as any;
+    } catch (error: any) {
+      // console.error("[fetchAllUsers] error:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Status:", error.response?.status);
+        console.error("Headers:", error.response?.headers);
+      }
+      throw handleError(error);
+    }
   }
 }

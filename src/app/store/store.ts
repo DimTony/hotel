@@ -8,6 +8,8 @@ import {
   ModalAction,
   ModalResult,
   ModalStage,
+  StatusModalAction,
+  StatusModalResult,
   User,
   UserRoles,
 } from "@/lib/types";
@@ -46,6 +48,14 @@ interface AppState {
   handleConfirm: () => Promise<void>;
   handleResultAction: () => void;
   setStage: (stage: ModalStage) => void;
+
+  // Status Modal
+  isStatusModalOpen: boolean;
+  statusModalCurrentAction: StatusModalAction | null;
+  statusModalActionResult: StatusModalResult | null;
+  showStatus: (action: StatusModalAction) => void;
+  statusModalActionCallback?: () => void;
+  closeStatus: () => void;
 
   selectedUser: any | null;
   setSelectedUser: (user: any) => void;
@@ -89,6 +99,11 @@ export const useStore = create<AppState>()(
       actionResult: null,
       actionCallback: undefined,
       rejectReason: "",
+
+      isStatusModalOpen: false,
+      statusModalCurrentAction: null,
+      statusModalActionResult: null,
+      statusModalActionCallback: undefined,
 
       selectedUser: null,
 
@@ -208,6 +223,30 @@ export const useStore = create<AppState>()(
 
       clearError: () => {
         set({ error: null });
+      },
+
+      showStatus: (action: StatusModalAction) => {
+        set({
+          isStatusModalOpen: true,
+          statusModalCurrentAction: action,
+          statusModalActionResult: null,
+        });
+      },
+
+      closeStatus: () => {
+        const { statusModalCurrentAction } = get();
+
+        // if (
+        //   statusModalCurrentAction?.onButtonClick &&
+        //   typeof statusModalCurrentAction.onButtonClick === "function"
+        // ) {
+        //   statusModalCurrentAction.onButtonClick();
+        // }
+
+        set({
+          isStatusModalOpen: false,
+          statusModalActionCallback: undefined,
+        });
       },
 
       openModal: (action: ModalAction) => {

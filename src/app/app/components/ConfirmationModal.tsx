@@ -18,16 +18,16 @@ const ModalOverlay: React.FC<{
   return (
     <div className="fixed inset-0 z-51 flex items-center justify-center bg-black/50">
       <div
-        className="bg-white relative rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
+        className=" backdrop-blur-xl bg-white/60 relative rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-[4.5%] left-[2.1%]">
-          <Image
+          {/* <Image
             src="/images/bg-pattern.svg"
             alt="info"
             width={120}
             height={120}
-          />
+          /> */}
         </div>
         {children}
       </div>
@@ -94,8 +94,8 @@ const Button: React.FC<{
     "cursor-pointer px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
   const variantStyles =
     variant === "primary"
-      ? "bg-[#003883] text-white hover:bg-[#002966] focus:ring-blue-500"
-      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500";
+      ? "bg-gray-600 text-white hover:bg-gray-700 focus:ring-blue-500"
+      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 focus:ring-blue-500";
   const widthStyles = fullWidth ? "w-full" : "";
   const disabledStyles = disabled ? "opacity-50 cursor-not-allowed" : "";
 
@@ -157,10 +157,10 @@ export const ConfirmationModal: React.FC = () => {
             <ModalHeader icon={currentAction?.icon} onClose={closeModal} />
 
             <div className="p-4">
-              <h2 className="text-2xl font-semibold">{currentAction?.title}</h2>
+              <span className="text-xl font-semibold">{currentAction?.title}</span>
 
               {currentAction?.description && (
-                <div className="mb-4 text-gray-600">
+                <div className="mb-4 text-xs text-white">
                   {currentAction.description}
                 </div>
               )}

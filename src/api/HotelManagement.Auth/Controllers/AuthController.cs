@@ -19,7 +19,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Register a new user
     /// </summary>
-    [HttpPost("register")]
+    [HttpPost("Register")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -42,7 +42,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Login with email and password
     /// </summary>
-    [HttpPost("login")]
+    [HttpPost("Login")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -134,5 +134,22 @@ public class AuthController : ControllerBase
                 role = role
             }
         });
+    }
+
+    [HttpGet("Users")]
+    [Authorize(Roles = "Admin,Manager")]
+    [ProducesResponseType(typeof(PaginatedResponseDTO<UserDTO>) , StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedResponseDTO<UserDTO>>> GetUsers([FromQuery] UserFilterDTO filter)
+    {
+        var result = await _authService.GetFilteredUsersAsync(filter);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
     }
 }

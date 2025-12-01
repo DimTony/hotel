@@ -8,6 +8,7 @@ import {
   X as XIcon,
   Menu,
   ChevronDown as ChevronDownIcon,
+  LogOut,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -28,7 +29,7 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
 
   // ✅ Check if user is SuperAdmin FIRST
   const isSuperAdmin = session?.user?.role?.some(
-    (ele) => ele === UserRoles.superAdmin
+    (ele) => ele === UserRoles.Admin
   );
 
   // If SuperAdmin, only show User Management
@@ -46,22 +47,23 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
             className="sidebar-icon"
           />
         ),
-        children: [
-          {
-            label: "Pending Requests",
-            href: "/user-management/pending-requests",
-          },
-        ],
+        // children: [
+        //   {
+        //     label: "Pending Requests",
+        //     href: "/user-management/pending-requests",
+        //   },
+        // ],
       },
     ];
   }
 
   // For all other roles, show their respective menus
   return [
-    session?.user?.role?.some((ele) => ele === UserRoles.admin) ||
-    session?.user?.role?.some((ele) => ele === UserRoles.accountOfficer) ||
-    session?.user?.role?.some((ele) => ele === UserRoles.user)
-      ? {
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+      ? //  ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.accountOfficer) ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.user)
+        {
           label: "Dashboard",
           href: "/dashboard",
           icon: (
@@ -76,9 +78,10 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         }
       : void 0,
 
-    session?.user?.role?.some((ele) => ele === UserRoles.admin) ||
-    session?.user?.role?.some((ele) => ele === UserRoles.user)
-      ? {
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+      ? //  ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.user)
+        {
           label: "Create Items",
           href: "/create-items",
           icon: (
@@ -93,10 +96,11 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         }
       : void 0,
 
-    session?.user?.role?.some((ele) => ele === UserRoles.accountOfficer) ||
-    session?.user?.role?.some((ele) => ele === UserRoles.admin) ||
-    session?.user?.role?.some((ele) => ele === UserRoles.user)
-      ? {
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+      ? //  ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.admin) ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.user)
+        {
           label: "View Deliverables",
           href: "/view-deliverables",
           icon: (
@@ -111,9 +115,10 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         }
       : void 0,
 
-    session?.user?.role?.some((ele) => ele === UserRoles.admin) ||
-    session?.user?.role?.some((ele) => ele === UserRoles.user)
-      ? {
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+      ? //  ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.user)
+        {
           label: "Group Heads",
           href: "/group-heads",
           icon: (
@@ -128,7 +133,7 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         }
       : void 0,
 
-    session?.user?.role?.some((ele) => ele === UserRoles.admin)
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
       ? {
           label: "Escalation Matrix",
           href: "/escalation-matrix",
@@ -144,7 +149,7 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         }
       : void 0,
 
-    session?.user?.role?.some((ele) => ele === UserRoles.admin)
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
       ? {
           label: "Audit Trail",
           href: "/audit-trails",
@@ -400,10 +405,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <div
-        className={`fixed top-0 left-0 h-[100vh] bg-white text-gray-800 border-r border-b-[1px] border-gray-300 transition-all duration-300 ease-in-out z-50 flex flex-col ${
+        className={`fixed top-0 left-0 h-screen backdrop-blur-xl bg-white/60 text-gray-800 border-r border-b border-gray-300 transition-all duration-300 ease-in-out z-50 flex flex-col ${
           isMobile
             ? `${isOpen ? "translate-x-0" : "-translate-x-full"} w-64`
-            : `${isCollapsed ? "w-16" : "w-[260px]"}`
+            : `${isCollapsed ? "w-16" : "w-[250px]"}`
         }`}
       >
         <div className="p-4 flex items-center justify-between shrink-0">
@@ -411,14 +416,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Link
               href={
                 session?.user?.role?.some(
-                  (ele: string) => ele === UserRoles.superAdmin
+                  (ele: string) => ele === UserRoles.Admin
                 )
                   ? "/user-management"
-                  : "/dashboard"
+                  : "/"
               }
             >
               <Image
-                src="/icons/access-svg.svg"
+                src="/images/hotelng-gray.png"
                 alt="Access icon"
                 width={179}
                 height={46}
@@ -459,8 +464,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             `}</style>
             <div className="flex flex-col gap-[1rem] pb-4">
               {!(isCollapsed && !isMobile) && (
-                <span className="uppercase ml-[24px] font-dm font-[700] text-[11px] leading-[13.2px] tracking-[2.2px] text-[#8094ae]">
-                  MENUS
+                <span className="uppercase ml-[24px] font-dm font-[700] text-[11px] leading-[13.2px] tracking-[2.2px] text-gray-600">
+                  MENU
                 </span>
               )}
               {sidebarItems.map((item, index) => renderMenuItem(item, index))}
@@ -516,13 +521,13 @@ const RootLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   useEffect(() => {
     if (session && status === "authenticated") {
       const isSuperAdmin = session?.user?.role?.some(
-        (ele: string) => ele === UserRoles.superAdmin
+        (ele: string) => ele === UserRoles.Admin
       );
 
       // If SuperAdmin is not on user-management page, redirect them
-      if (isSuperAdmin && !pathname.startsWith("/user-management")) {
-        window.location.href = "/user-management";
-      }
+      // if (isSuperAdmin && !pathname.startsWith("/user-management")) {
+      //   window.location.href = "/user-management";
+      // }
     }
   }, [session, status, pathname]);
 
@@ -563,7 +568,7 @@ const RootLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       />
       <div
         className={`flex-1 flex flex-col h-screen transition-all duration-300 ${
-          isMobile ? "ml-0" : isCollapsed ? "ml-16" : "ml-[260px]"
+          isMobile ? "ml-0" : isCollapsed ? "ml-16" : "ml-[250px]"
         }`}
       >
         <div className="sticky top-0 z-40 bg-white">

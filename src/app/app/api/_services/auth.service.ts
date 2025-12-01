@@ -2,10 +2,11 @@ import { AuthOptions, DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import AzureAD from "next-auth/providers/azure-ad";
 import { UserRoles } from "@/lib/types";
-import { sessionManager } from "./session.service";
+// import { sessionManager } from "./session.service";
 import { ApiService } from "./api.v2.service";
 import { logger } from "@/lib/logger";
 import { JWTService } from "./token.service";
+import { sessionManager } from "@/lib/sessionManager";
 
 // Rate limiting store
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -44,15 +45,17 @@ function checkRateLimit(
 declare module "next-auth" {
   interface Session {
     accessToken?: string;
+    expiresAt?: string;
+    isTokenExpired?: boolean;
     userId?: string;
     sessionId?: string;
     browserFingerprint?: string;
     //@ts-ignore
     user: {
       id: string;
-      nt: string;
-      name: string;
-      username: string;
+      firstName: string;
+      lastName: string;
+      fullName: string;
       role: UserRoles[];
     } & DefaultSession["user"];
   }
@@ -78,41 +81,42 @@ const AzureADProvider = AzureAD({
   },
 });
 
-const TestProvider = CredentialsProvider({
-  id: "mock-credentials",
-  name: "Test credentials",
+const AuthProvider = CredentialsProvider({
+  id: "auth-credentials",
+  name: "Auth credentials",
   credentials: {
-    username: { label: "Username", type: "text" },
-    code: { label: "Code", type: "text" },
-    token: { label: "Token", type: "text" },
+    email: { label: "Email", type: "text" },
+    password: { label: "Password", type: "text" },
   },
   //@ts-ignore
   async authorize(credentials) {
-    if (!credentials?.username || !credentials?.code || !credentials?.token) {
+    if (!credentials?.email || !credentials?.password) {
       return null;
     }
 
     const apiService = new ApiService();
 
     const payload = {
-      username: credentials.username,
-      code: credentials.code,
-      token: credentials.token,
+      email: credentials.email,
+      password: credentials.password,
     };
 
     try {
-      const response = await apiService.authenticateEntrust(payload);
+      const response = await apiService.validateUser(payload);
 
-      if (response.httpStatusCode === 200 && !response.data) {
+      // console.log("SERIVCE:", response);
+      if (response.success && !response.user) {
         throw new Error(response.message || "Invalid Token Request");
       }
 
-      if (!response?.data?.auth?.accessToken) {
-        logger.error(`Authentication failed for user: ${credentials.username}`);
+      if (!response?.accessToken) {
+        logger.error(`Authentication failed for user: ${credentials.email}`);
         throw new Error(response.message || "Unable to verify token");
       }
 
-      const jwtPayload = JWTService.verifyToken(response.data.auth.accessToken);
+      const jwtPayload = JWTService.verifyToken(response.accessToken);
+
+      // console.log("SERIVCE:", jwtPayload);
 
       if (!jwtPayload) {
         logger.error("Invalid or expired JWT token");
@@ -131,7 +135,7 @@ const TestProvider = CredentialsProvider({
         [];
 
       if (authorizedRoles.length > 0) {
-        const hasAuthorizedRole = userInfo.roles.some((role: any) =>
+        const hasAuthorizedRole = userInfo.role.some((role: any) =>
           authorizedRoles.includes(role)
         );
 
@@ -140,17 +144,18 @@ const TestProvider = CredentialsProvider({
         }
       }
 
-      rateLimitStore.delete(`auth:${credentials.username}`);
+      rateLimitStore.delete(`auth:${credentials.email}`);
 
       return {
         id: userInfo.id.toString(),
-        nt: userInfo.username,
-        username: userInfo.username,
-        name: userInfo.name,
         email: userInfo.email,
-        image: null,
-        role: userInfo.roles,
-        accessToken: response.data.auth.accessToken,
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        fullName: userInfo.fullName,
+        role: userInfo.role,
+        isTokenExpired: userInfo.isTokenExpired,
+        expiresAt: userInfo.expiresAt,
+        accessToken: response.accessToken,
       };
     } catch (error: any) {
       logger.error("Entrust authentication failed:", error);
@@ -159,169 +164,8 @@ const TestProvider = CredentialsProvider({
   },
 });
 
-const MiddlewareProvider = CredentialsProvider({
-  id: "middleware-credentials",
-  name: "Access bank",
-  credentials: {
-    username: { label: "Username", type: "text" },
-    code: { label: "Code", type: "text" },
-    token: { label: "Token", type: "text" },
-  },
-  //@ts-ignore
-  async authorize(credentials) {
-    try {
-      // 🔍 LOG 1: Check what credentials are received
-      console.log("🔐 [MiddlewareProvider] Starting authorization...");
-      console.log("📥 [MiddlewareProvider] Credentials received:", {
-        username: credentials?.username,
-        hasCode: !!credentials?.code,
-        hasToken: !!credentials?.token,
-        codeLength: credentials?.code?.length,
-        tokenLength: credentials?.token?.length,
-      });
-
-      if (!credentials?.username || !credentials?.code || !credentials?.token) {
-        console.error("❌ [MiddlewareProvider] Missing required credentials");
-        throw new Error("Missing required credentials");
-      }
-
-      // Add rate limiting check - 10 attempts per 15 minutes
-      if (!checkRateLimit(credentials.username, 10, 900000)) {
-        logger.error(`Rate limit exceeded for user: ${credentials.username}`);
-        console.error(
-          "⏱️ [MiddlewareProvider] Rate limit exceeded for:",
-          credentials.username
-        );
-        throw new Error(
-          "Too many authentication attempts. Please try again later."
-        );
-      }
-
-      const apiService = new ApiService();
-
-      const payload = {
-        username: credentials.username,
-        code: credentials.code,
-        token: credentials.token,
-      };
-
-      // 🔍 LOG 2: About to call API
-      console.log("🌐 [MiddlewareProvider] Calling authenticateEntrust API...");
-
-      const response = await apiService.authenticateEntrust(payload);
-
-      // 🔍 LOG 3: API response received
-      console.log("📡 [MiddlewareProvider] API Response:", {
-        httpStatusCode: response.httpStatusCode,
-        hasData: !!response.data,
-        message: response.message,
-        hasAccessToken: !!response?.data?.auth?.accessToken,
-      });
-
-      if (response.httpStatusCode === 200 && !response.data) {
-        throw new Error(response.message || "Invalid Token Request");
-      }
-
-      if (!response?.data.auth?.accessToken) {
-        logger.error(`Authentication failed for user: ${credentials.username}`);
-        console.error("❌ [MiddlewareProvider] No access token in response:", {
-          username: credentials.username,
-          message: response.message,
-          responseData: response.data,
-        });
-        throw new Error(response.message || "Unable to verify token");
-      }
-
-      // 🔍 LOG 4: Verifying JWT
-      console.log("🔑 [MiddlewareProvider] Verifying JWT token...");
-
-      const jwtPayload = JWTService.verifyToken(response.data.auth.accessToken);
-
-      if (!jwtPayload) {
-        logger.error("Invalid or expired JWT token");
-        console.error("❌ [MiddlewareProvider] JWT verification failed");
-        throw new Error("Invalid authentication token");
-      }
-
-      // 🔍 LOG 5: Extracting user info
-      console.log("👤 [MiddlewareProvider] Extracting user info from JWT...");
-
-      const userInfo = JWTService.extractUserInfo(jwtPayload);
-
-      if (!userInfo) {
-        logger.error("Failed to extract user information from JWT");
-        console.error(
-          "❌ [MiddlewareProvider] Failed to extract user info from JWT"
-        );
-        throw new Error("Invalid user data in token");
-      }
-
-      // 🔍 LOG 6: User info extracted
-      console.log("✅ [MiddlewareProvider] User info extracted:", {
-        id: userInfo.id,
-        username: userInfo.username,
-        name: userInfo.name,
-        email: userInfo.email,
-        roles: userInfo.roles,
-      });
-
-      const authorizedRoles =
-        process.env.AUTHORIZED_ROLES?.split(",").map((role) => role.trim()) ||
-        [];
-
-      if (authorizedRoles.length > 0) {
-        console.log("🔒 [MiddlewareProvider] Checking role authorization...", {
-          userRoles: userInfo.roles,
-          authorizedRoles,
-        });
-
-        const hasAuthorizedRole = userInfo.roles.some((role: any) =>
-          authorizedRoles.includes(role)
-        );
-
-        if (!hasAuthorizedRole) {
-          console.error(
-            "❌ [MiddlewareProvider] User does not have authorized role"
-          );
-          throw new Error("Unauthorized User, Contact your administrator!");
-        }
-      }
-
-      // Clear rate limit on successful authentication
-      rateLimitStore.delete(`auth:${credentials.username}`);
-
-      // 🔍 LOG 7: Success!
-      console.log(
-        "✅ [MiddlewareProvider] Authorization successful for:",
-        credentials.username
-      );
-
-      return {
-        id: userInfo.id.toString(),
-        nt: userInfo.username,
-        username: userInfo.username,
-        name: userInfo.name,
-        email: userInfo.email,
-        image: null,
-        role: userInfo.roles,
-        accessToken: response.data.auth.accessToken,
-      };
-    } catch (error) {
-      // 🔍 LOG 8: Error details
-      console.error("❌ [MiddlewareProvider] Authorization error:", {
-        error: error instanceof Error ? error.message : error,
-        stack: error instanceof Error ? error.stack : undefined,
-        username: credentials?.username,
-      });
-
-      logger.error("MiddlewareProvider authorization error:", error);
-      throw error; // Re-throw to let NextAuth handle it
-    }
-  },
-});
-
 export const authOptions: AuthOptions = {
-  providers: [TestProvider, MiddlewareProvider, AzureADProvider],
+  providers: [AuthProvider, AzureADProvider],
   debug: true, // Enable debug messages
   logger: {
     error: (code, metadata) => {
@@ -346,7 +190,7 @@ export const authOptions: AuthOptions = {
       if (url.includes("/api/auth/callback/azure-ad")) {
         // console.log("Redirecting from Azure AD to application page");
         // return `${baseUrl}/atm-load-unload`;
-        return `/dashboard`;
+        return `/`;
       }
 
       if (url === `${baseUrl}/`) {
@@ -356,15 +200,49 @@ export const authOptions: AuthOptions = {
         return url;
       }
       // console.log("Redirecting from callback");
-      return `/dashboard`;
+      return `/`;
     },
+    async signIn({ account, profile, user }) {
+      // For other providers, also validate login attempt
+      if (user?.id) {
+        await sessionManager.validateLoginAttempt(user.id);
+      }
 
+      return true;
+    },
     async jwt({ token, account, user, profile, trigger }) {
       if (user) {
         // console.log("User in Token:", user);
+        const existingSessionId = (user as any).sessionId;
+        const isParentSession = account?.provider === "parent-session";
 
-        token.sessionId = crypto.randomUUID();
-        token.userId = user.id;
+        if (existingSessionId) {
+          // Use the existing sessionId from parent app
+          token.sessionId = existingSessionId;
+          token.userId = (user as any).userId || user.id;
+        } else {
+          // Generate new sessionId for new logins
+          token.sessionId = crypto.randomUUID();
+          token.userId = user.id;
+        }
+
+        if (!isParentSession) {
+          try {
+            const sessionId = token.sessionId as string;
+            const userId = token.userId as string;
+
+            // Check if session already exists
+            const existingSession = await sessionManager.getSession(sessionId);
+
+            if (!existingSession) {
+              // Only create if it doesn't exist
+              await sessionManager.createSession(userId, sessionId);
+            }
+          } catch (error) {
+            logger.error("Error creating session in database:", error);
+            // Don't fail authentication if session creation fails
+          }
+        }
       }
 
       if (trigger === "update" && token.sessionId) {
@@ -379,25 +257,98 @@ export const authOptions: AuthOptions = {
           // Return an invalid token to force a new sign in()
           return { ...token, error: "RefreshAccessTokenError" };
         }
+
+        await sessionManager.updateSessionActivity((token as any).sessionId);
+      }
+
+      if (token.error) {
+        return token;
       }
 
       if (account) {
-        if (account.provider === "middleware-credentials") {
+        if (account.provider === "auth-credentials") {
           // Copy user data to token
-          token.nt = (user as any).nt;
-          token.name = (user as any).name;
           token.email = (user as any).email;
+          token.firstName = (user as any).firstName;
+          token.lastName = (user as any).lastName;
+          token.fullName = (user as any).fullName;
           token.role = (user as any).role;
+          token.isTokenExpired = (user as any).isTokenExpired;
+          token.expiresAt = (user as any).expiresAt;
           token.accessToken = (user as any).accessToken;
         }
 
-        if (account.provider === "azure-ad") {
-          // Extract NT from the Azure AD profile username (email)
-          const ntUsername = (
-            profile as Profile<typeof profile>
-          )?.preferred_username?.split("@")[0];
+        if (account?.provider === "parent-session") {
+          const logPrefix = `[JWT Callback - Parent Session ${new Date().toISOString()}]`;
+          logger.info(`${logPrefix} Processing parent-session provider`);
+          token.email = (user as any).email;
+          token.firstName = (user as any).firstName;
+          token.lastName = (user as any).lastName;
+          token.fullName = (user as any).fullName;
+          token.role = (user as any).role;
+          token.isTokenExpired = (user as any).isTokenExpired;
+          token.expiresAt = (user as any).expiresAt;
+          token.accessToken = (user as any).accessToken;
+          token.parentSessionValidated = true;
 
-          token.nt = ntUsername;
+          logger.info(`${logPrefix} Token populated`, {
+            userId: token.userId,
+            sessionId: token.sessionId,
+            userNT: token.nt,
+            userRoles: token.role,
+          });
+
+          // For parent-session, ensure session exists in database
+          // The sessionId and userId are already set above from the user object
+          const userId = token.userId as string;
+          const sessionId = token.sessionId as string;
+
+          if (userId && sessionId) {
+            try {
+              logger.info(
+                `${logPrefix} Validating login attempt for userId: ${userId}`
+              );
+              // Validate login attempt (blacklists existing sessions)
+              await sessionManager.validateLoginAttempt(userId);
+              logger.info(
+                `${logPrefix} Login attempt validated, existing sessions blacklisted`
+              );
+
+              // Check if session exists, create if it doesn't
+              const existingSession = await sessionManager.getSession(
+                sessionId
+              );
+              logger.info(`${logPrefix} Existing session check:`, {
+                sessionId,
+                exists: !!existingSession,
+              });
+
+              if (!existingSession) {
+                logger.info(
+                  `${logPrefix} Creating new session in database: ${sessionId}`
+                );
+                await sessionManager.createSession(userId, sessionId);
+                logger.info(
+                  `${logPrefix} Session created successfully: ${sessionId}`
+                );
+              } else {
+                logger.info(
+                  `${logPrefix} Session already exists in database: ${sessionId}`
+                );
+              }
+            } catch (error) {
+              logger.error(
+                `${logPrefix} Error handling parent-session:`,
+                error
+              );
+              // Don't fail authentication if session creation fails
+            }
+          } else {
+            logger.warn(`${logPrefix} Missing userId or sessionId`, {
+              userId: !!userId,
+              sessionId: !!sessionId,
+            });
+          }
         }
 
         if (
@@ -405,19 +356,7 @@ export const authOptions: AuthOptions = {
           typeof token.expiresAt === "number" &&
           Date.now() > token.expiresAt
         ) {
-          return Promise.reject({
-            error: "Token expired",
-          });
-        }
-
-        if (account.provider === "mock-credentials") {
-          // console.log("user in JWT:", user);
-
-          token.nt = (user as any).nt;
-          token.name = (user as any).name;
-          token.email = (user as any).email;
-          token.role = (user as any).role;
-          token.accessToken = (user as any).accessToken;
+          return { ...token, error: "TokenExpired" };
         }
       }
       if (token.picture) {
@@ -427,31 +366,106 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      if (token.error) {
+        throw new Error(`Authentication error: ${token.error}`);
+      }
+
       if (token) {
-        session.userId = token.userId as string;
-        session.sessionId = token.sessionId as string;
-
-        const isValid = await sessionManager.isSessionValid(
-          (token as any).sessionId
-        );
-        const isUserValid = await sessionManager.isUserValid(
-          (token as any).userId
-        );
-
-        if (!isValid || !isUserValid) {
-          throw new Error("Session has been invalidated");
-        }
         // console.log('Token in Session:', token)
 
+        session.userId = token.userId as string;
+        session.sessionId = token.sessionId as string;
         session.accessToken = token.accessToken as string;
+        session.expiresAt = token.expiresAt as string;
+        session.isTokenExpired = token.isTokenExpired as boolean;
         session.user = {
           ...session.user,
-          nt: token.nt as string,
           email: token.email as string,
-          name: token.name as string,
-          image: "",
+          firstName: token.firstName as string,
+          lastName: token.lastName as string,
+          fullName: token.fullName as string,
           role: token.role as UserRoles[],
+          image: "",
         };
+
+        const sessionId = token.sessionId as string;
+
+        if (sessionId) {
+          try {
+            const isValid = await sessionManager.isSessionValid(sessionId);
+
+            if (!isValid) {
+              // Get session details for better error message
+              const sessionData = await sessionManager.getSession(sessionId);
+
+              // If session doesn't exist, try to create it (for both parent-session and regular sessions)
+              if (!sessionData && token.userId) {
+                try {
+                  await sessionManager.createSession(
+                    token.userId as string,
+                    sessionId
+                  );
+                  // Re-check validity after creation
+                  const isValidAfterCreate =
+                    await sessionManager.isSessionValid(sessionId);
+                  if (isValidAfterCreate) {
+                    // Continue with updating activity
+                    await sessionManager.updateSessionActivity(sessionId);
+                  } else {
+                    logger.warn(
+                      `Session validation failed after creation, but allowing session to continue`
+                    );
+                    // Don't throw error - allow session to continue
+                  }
+                } catch (createError) {
+                  logger.error(`Failed to create session:`, createError);
+                  // Don't throw error - allow session to continue
+                  // The jwt callback should have created it, this is just a fallback
+                }
+              } else if (sessionData) {
+                // Session exists but is invalid (blacklisted or expired)
+                if (sessionData.isBlacklisted) {
+                  const reason =
+                    "Session has been blacklisted (user logged in elsewhere)";
+                  throw new Error(`Session validation failed: ${reason}`);
+                } else if (new Date() > sessionData.expiresAt) {
+                  const reason = "Session has expired";
+
+                  throw new Error(`Session validation failed: ${reason}`);
+                }
+              } else {
+                // Session doesn't exist and we couldn't create it - log warning but allow to continue
+                logger.warn(
+                  `Session not found in database and could not be created: ${sessionId}`
+                );
+                // Don't throw error - allow session to continue
+              }
+            } else {
+              // Session is valid - update activity to extend expiration
+
+              await sessionManager.updateSessionActivity(sessionId);
+            }
+          } catch (validationError) {
+            // Only re-throw if it's a critical error (blacklisted/expired)
+            // Otherwise, log and continue
+            if (
+              validationError instanceof Error &&
+              validationError.message.includes("Session validation failed")
+            ) {
+              throw validationError;
+            }
+            logger.error(
+              ` Non-critical session validation error:`,
+              validationError
+            );
+            // Allow session to continue for non-critical errors
+          }
+        } else {
+          // Log warning but don't throw error - sessionId might be set in next request
+          logger.warn(`Session ID not found in token, but continuing`, {
+            tokenKeys: Object.keys(token),
+          });
+        }
       }
       // console.log('Final Session object:', session)
       return session;

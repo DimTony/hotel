@@ -1,14 +1,18 @@
 export class Backend {
-  static base = process.env.NEXT_API_BASE_URL;
-  static ad = process.env.NEXT_AD_MIDDLEWARE_URL;
+  static auth = process.env.NEXT_AUTH_MIDDLEWARE_URL;
+  static room = process.env.NEXT_ROOM_MIDDLEWARE_URL;
+  static booking = process.env.NEXT_BOOKING_MIDDLEWARE_URL;
 }
 
 export class Authentication {
   // POST
-  static login = `/api/Authentication/Login`;
+  // static login = `/api/Authentication/Login`;
+  static login = `/api/Auth/Login`;
 
   // POST
-  static validateToken = `/api/Authentication/ValidateToken`;
+  static getAllUsers = `/api/Auth/Users`;
+
+  static createUser = `/api/Auth/Register`;
 
   // POST
   static logout = `/api/Authentication/Logout`;
@@ -18,7 +22,6 @@ export class Authentication {
 
   // GET COUNT BY GRADE
   static mockLogin = `/api/Authentication/MockLogin`;
-
 
   static validateADuser = `/ad/v2/UserByNT`;
 
@@ -197,8 +200,7 @@ export class Audit {
   static updateUser = `/api/User/UpdateUser`;
 
   // GET COUNT BY GRADE
-  static downloadReport =  `/api/Audit/ExportAuditLog`;
-
+  static downloadReport = `/api/Audit/ExportAuditLog`;
 
   // GET
   static getOne = (_: any, code: string) => `/api/Appraisal/${code}`;

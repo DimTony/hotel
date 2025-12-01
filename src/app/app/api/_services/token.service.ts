@@ -2,11 +2,13 @@ import jwt from "jsonwebtoken";
 import { logger } from "@/lib/logger";
 
 interface JWTPayload {
-  unique_name: string;
+  // unique_name: string;
   sub: string;
-  Name: string;
+  email: string;
+  given_name: string;
+  family_name: string;
   "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": string;
-  AdminData: string;
+  jti: string;
   exp: number;
   iss: string;
   aud: string;
@@ -44,6 +46,16 @@ export class JWTService {
     }
   }
 
+  static isTokenExpired(payload: JWTPayload): boolean {
+    if (!payload.exp) return true;
+
+    const expirationTIme = payload.exp * 1000;
+    const currentTime = Date.now();
+    const buffer = 30 * 1000;
+
+    return currentTime >= expirationTIme - buffer;
+  }
+
   static extractUserRoles(payload: JWTPayload): string[] {
     const roles: string[] = [];
 
@@ -52,13 +64,6 @@ export class JWTService {
         payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
       if (roleFromClaim) {
         roles.push(roleFromClaim);
-      }
-
-      if (payload.AdminData) {
-        const adminData: ParsedAdminData = JSON.parse(payload.AdminData);
-        if (adminData.role && !roles.includes(adminData.role)) {
-          roles.push(adminData.role);
-        }
       }
     } catch (error) {
       logger.error("Error extracting roles from JWT payload:", error);
@@ -69,19 +74,23 @@ export class JWTService {
 
   static extractUserInfo(payload: JWTPayload) {
     try {
-      let adminData: ParsedAdminData | null = null;
+      const role = this.extractUserRoles(payload);
+      const isExpired = this.isTokenExpired(payload);
 
-      if (payload.AdminData) {
-        adminData = JSON.parse(payload.AdminData);
-      }
+      const firstName = payload.given_name || "";
+      const lastName = payload.family_name || "";
+      const fullName =
+        `${firstName} ${lastName}`.trim() || payload.given_name || "";
 
       return {
-        id: adminData?.id || payload.sub,
-        username: payload.sub,
-        name: payload.Name || adminData?.name,
-        email: payload.unique_name || adminData?.emailAddress,
-        roles: this.extractUserRoles(payload),
-        lastLogin: adminData?.lastLogin,
+        id: payload.sub,
+        email: payload.email,
+        firstName,
+        lastName,
+        fullName,
+        role,
+        isTokenExpired: isExpired,
+        expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
       };
     } catch (error) {
       logger.error("Error extracting user info from JWT:", error);

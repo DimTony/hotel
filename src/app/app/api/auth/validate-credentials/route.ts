@@ -11,7 +11,9 @@ export async function POST(request: NextRequest) {
       password: body.password,
     };
 
-    const response = await apiService.validateUserForEntrust(payload);
+    const response = await apiService.validateUser(payload);
+
+    console.log("RESSSS", response);
 
     return NextResponse.json(response, { status: 200 });
   } catch (error: any) {

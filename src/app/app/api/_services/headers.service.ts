@@ -16,7 +16,19 @@ const defaultHeaders = {
 export const middlewareHeaders = {
   "Content-Type": "application/json",
   "Cache-Control": "no-cache",
-  "Subscription-Key": process.env.NEXT_SECRET_MIDDLEWARE_SUBKEY as string,
+  "Subscription-Key": process.env.NEXT_AUTH_MIDDLEWARE_SUBKEY as string,
+};
+
+export const roomHeaders = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-cache",
+  // "Subscription-Key": process.env.NEXT_AUTH_MIDDLEWARE_SUBKEY as string,
+};
+
+export const bookingHeaders = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-cache",
+  // "Subscription-Key": process.env.NEXT_AUTH_MIDDLEWARE_SUBKEY as string,
 };
 
 export const documentHeaders = {

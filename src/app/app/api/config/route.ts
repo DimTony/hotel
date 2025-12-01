@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 interface ConfigResponse {
   credentialsMode: string;
   azureAdEnabled: string;
-  adGroups: string;
+  // adGroups: string;
 }
 
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
     const requiredEnvVars = {
       CREDENTIALS_MODE: process.env.CREDENTIALS_MODE,
       AZURE_AD_ENABLED: process.env.AZURE_AD_ENABLED,
-      AUTHORIZED_GROUPS: process.env.AUTHORIZED_GROUPS,
+      // AUTHORIZED_GROUPS: process.env.AUTHORIZED_GROUPS,
     };
 
     const missingVars = Object.entries(requiredEnvVars)
@@ -22,7 +22,11 @@ export async function GET(
 
     if (missingVars.length > 0) {
       return NextResponse.json(
-        { error: `Missing required environment variables: ${missingVars.join(', ')}` },
+        {
+          error: `Missing required environment variables: ${missingVars.join(
+            ", "
+          )}`,
+        },
         { status: 500 }
       );
     }
@@ -30,7 +34,7 @@ export async function GET(
     const config: ConfigResponse = {
       credentialsMode: requiredEnvVars.CREDENTIALS_MODE!,
       azureAdEnabled: requiredEnvVars.AZURE_AD_ENABLED!,
-      adGroups: requiredEnvVars.AUTHORIZED_GROUPS!,
+      // adGroups: requiredEnvVars.AUTHORIZED_GROUPS!,
     };
 
     return NextResponse.json(config);

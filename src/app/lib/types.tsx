@@ -52,10 +52,9 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      nt: string;
-      name: string;
-      username: string;
-      token?: string;
+      firstName: string;
+      lastName: string;
+      fullName: string;
       role: UserRoles[];
     } & DefaultSession["user"];
   }
@@ -87,10 +86,10 @@ export interface User {
 }
 
 export enum UserRoles {
-  admin = "Admin",
-  accountOfficer = "AccountOfficer",
-  user = "User",
-  superAdmin = "SuperAdmin",
+  Receptionist = "Receptionist",
+  Admin = "Admin",
+  Manager = "Manager",
+  Guest = "Guest",
 }
 
 export interface Credentials {
@@ -241,9 +240,28 @@ export interface ModalAction {
   onCancel?: () => void;
 }
 
+export interface StatusModalAction {
+  success: boolean;
+  title: string;
+  message?: string;
+  icon?: string | React.ReactNode;
+  buttonText?: string;
+  onButtonClick: () => void;
+}
+
 export type ModalResult = {
   success: boolean;
   displayText: string;
+  buttonText: string;
+  icon?: string | ReactNode;
+  redirectPath?: string;
+  callbackFunction?: () => void;
+};
+
+export type StatusModalResult = {
+  success: boolean;
+  title: string;
+  message: string;
   buttonText: string;
   icon?: string | ReactNode;
   redirectPath?: string;
@@ -291,4 +309,26 @@ export interface StatusChange {
 
 export interface DeliverableFormValues extends Deliverable {
   statusHistory: StatusChange[];
+}
+
+
+export interface UserTableFilter {
+  pageNumber: number;
+  pageSize: number;
+  filter: {
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+    globalSearch?: string;
+    status?: string;
+    tab?: string;
+  };
+}
+
+export interface CreateUserPayload {
+  firstName?: string | undefined;
+  lastName?: string | undefined;
+  email?: string | undefined;
+  role?: string | undefined;
+  status?: string | undefined;
 }
