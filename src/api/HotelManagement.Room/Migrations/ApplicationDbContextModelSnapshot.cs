@@ -123,8 +123,13 @@ namespace HotelManagement.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RoomType")
-                        .HasColumnType("int");
+                    b.Property<string>("RoomType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -139,7 +144,8 @@ namespace HotelManagement.Migrations
                             IsAvailable = true,
                             PricePerNight = 100m,
                             RoomNumber = "101",
-                            RoomType = 0
+                            RoomType = "Single",
+                            Status = "Available"
                         },
                         new
                         {
@@ -149,7 +155,8 @@ namespace HotelManagement.Migrations
                             IsAvailable = true,
                             PricePerNight = 150m,
                             RoomNumber = "102",
-                            RoomType = 1
+                            RoomType = "Double",
+                            Status = "Available"
                         },
                         new
                         {
@@ -159,7 +166,8 @@ namespace HotelManagement.Migrations
                             IsAvailable = true,
                             PricePerNight = 300m,
                             RoomNumber = "201",
-                            RoomType = 2
+                            RoomType = "Suite",
+                            Status = "Available"
                         });
                 });
 

@@ -20,6 +20,17 @@ namespace HotelManagement.Data
                 .Property(r => r.PricePerNight)
                 .HasPrecision(18, 2);
 
+            modelBuilder.Entity<Room>()
+                .Property(r => r.Status)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Room>()
+                .Property(r => r.RoomType)
+                .HasConversion<string>();
+
+            //entity.Property(u => u.Role).IsRequired().HasMaxLength(50)
+            //           .HasConversion<string>();
+
             modelBuilder.Entity<Booking>()
                .Property(b => b.TotalAmount)
                .HasPrecision(18, 2);

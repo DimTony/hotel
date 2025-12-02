@@ -6,6 +6,7 @@ namespace HotelManagement.Models
         public int Id { get; set; }
         public string RoomNumber { get; set; }
         public RoomType RoomType { get; set; } // e.g., Single, Double, Suite
+        public RoomStatus Status { get; set; } // e.g., Single, Double, Suite
         public decimal PricePerNight { get; set; }
         public int Capacity { get; set; }
         public bool IsAvailable { get; set; }
@@ -26,5 +27,14 @@ namespace HotelManagement.Models
         Double,
         Suite,
         Deluxe
+    }
+
+    public enum RoomStatus
+    {
+        Available,
+        Occupied,
+        Maintenance,
+        Booked,
+        Reserved
     }
 }

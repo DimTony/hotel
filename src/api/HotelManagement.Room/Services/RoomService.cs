@@ -306,6 +306,7 @@ namespace HotelManagement.Services
                 Id = room.Id,
                 RoomNumber = room.RoomNumber,
                 RoomType = room.RoomType.ToString(),
+                Status = room.Status.ToString(),
                 PricePerNight = room.PricePerNight,
                 Capacity = room.Capacity,
                 IsAvailable = room.IsAvailable,

@@ -9,10 +9,10 @@ import { toast } from "sonner";
 
 // Role-based redirect configuration - MUST match UserRoles enum
 const ROLE_REDIRECTS: Record<UserRoles, string> = {
-  [UserRoles.Admin]: "/admin/dashboard",
-  [UserRoles.Manager]: "/manager/dashboard",
-  [UserRoles.Receptionist]: "/staff/dashboard",
-  [UserRoles.Guest]: "/customer/dashboard",
+  [UserRoles.Admin]: "/a/dashboard",
+  [UserRoles.Manager]: "/m/dashboard",
+  [UserRoles.Receptionist]: "/dashboard",
+  [UserRoles.Guest]: "/home",
 } as const;
 
 export default function LoginPage() {

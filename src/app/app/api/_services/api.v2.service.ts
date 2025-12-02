@@ -7,7 +7,7 @@ import * as https from "node:https";
 import Endpoints, { Backend } from "../_endpoints/api.endpoint";
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { AuthenticationRequest, EntrustRequest } from "../_models/api.model";
-import { ApiResponse, CreateUserPayload, UserTableFilter } from "@/lib/types";
+import { ApiResponse, CreateUserPayload, RoomTableFilter, UserTableFilter } from "@/lib/types";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./auth.service";
 
@@ -199,6 +199,7 @@ export class ApiService {
     return !!this.accessToken;
   }
 
+  // USERS
   async fetchAllUsers(filter: UserTableFilter) {
     try {
       const params: any = {
@@ -208,11 +209,77 @@ export class ApiService {
 
       if (filter.filter?.search) {
         params.SearchTerm = filter.filter.search;
-      } 
+      }
 
       console.log("PAYLOAD:", params);
       const response = await this.auth.get(
         Endpoints.Authentication.getAllUsers,
+        {
+          params,
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }
+      );
+
+      return response.data as any;
+    } catch (error: any) {
+      // console.error("[fetchAllUsers] error:", error);
+      // if (axios.isAxiosError(error)) {
+      //   console.error("Response data:", error.response?.data);
+      //   console.error("Status:", error.response?.status);
+      //   console.error("Headers:", error.response?.headers);
+      // }
+      throw handleError(error);
+    }
+  }
+
+  async createNewUser(data: CreateUserPayload) {
+    try {
+      const response = await this.auth.post(
+        Endpoints.Authentication.createUser,
+        data
+      );
+
+      return response.data as any;
+    } catch (error: any) {
+      // console.error("[fetchAllUsers] error:", error);
+      // if (axios.isAxiosError(error)) {
+      //   console.error("Response data:", error.response?.data);
+      //   console.error("Status:", error.response?.status);
+      //   console.error("Headers:", error.response?.headers);
+      // }
+      throw handleError(error);
+    }
+  }
+
+  async updateUser(data: CreateUserPayload) {
+    try {
+      const response = await this.auth.put(
+        Endpoints.Authentication.updateUser,
+        data
+      );
+
+      return response.data as any;
+    } catch (error: any) {
+      // console.error("[fetchAllUsers] error:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Status:", error.response?.status);
+        console.error("Headers:", error.response?.headers);
+      }
+      throw handleError(error);
+    }
+  }
+
+  async deleteUser(data: { userId: number }) {
+    try {
+      const params: any = {
+        Id: data.userId,
+      };
+
+      const response = await this.auth.delete(
+        Endpoints.Authentication.deleteUser,
         {
           params,
           headers: {
@@ -233,12 +300,53 @@ export class ApiService {
     }
   }
 
-  async createNewUser(data: CreateUserPayload) {
+  // ROOMS
+  async fetchAllRooms(filter: RoomTableFilter) {
     try {
-      const response = await this.auth.post(
-        Endpoints.Authentication.createUser,
-        data
-      );
+      const params: any = {
+        PageNumber: filter.pageNumber,
+        PageSize: filter.pageSize,
+      };
+
+      if (filter.filter?.search) {
+        params.SearchTerm = filter.filter.search;
+      }
+
+      if (filter.filter?.status) {
+        params.Status = filter.filter.status;
+      }
+
+      if (filter.filter?.roomType) {
+        params.RoomType = filter.filter.roomType;
+      }
+
+      if (filter.filter?.roomNumber) {
+        params.RoomNumber = filter.filter.roomNumber;
+      }
+
+      if (filter.filter?.minPrice) {
+        params.MinPrice = filter.filter.minPrice;
+      }
+
+      if (filter.filter?.maxPrice) {
+        params.MaxPrice = filter.filter.maxPrice;
+      }
+
+      if (filter.filter?.checkInDate) {
+        params.CheckInDate = filter.filter.checkInDate;
+      }
+
+      if (filter.filter?.checkOutDate) {
+        params.CheckOutDate = filter.filter.checkOutDate;
+      }
+
+      console.log("PAYLOAD:", params);
+      const response = await this.room.get(Endpoints.Room.getAllRooms, {
+        params,
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
 
       return response.data as any;
     } catch (error: any) {

@@ -42,8 +42,40 @@ export const useUserService = () => {
     }
   };
 
+  const updateUser = async (payload: CreateUserPayload): Promise<any> => {
+    try {
+      setLoading(true);
+      const response = await userService.updateUser(payload);
+
+      // console.log("fetchReferenceLetterData response:", response);
+      return response;
+    } catch (err) {
+      // console.error("Error in createNewUser:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId: number): Promise<any> => {
+    try {
+      setLoading(true);
+      const response = await userService.deleteUser(userId);
+
+      // console.log("fetchReferenceLetterData response:", response);
+      return response;
+    } catch (err) {
+      // console.error("Error in createNewUser:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     fetchAllUsers,
     createNewUser,
+    updateUser,
+    deleteUser,
   };
 };

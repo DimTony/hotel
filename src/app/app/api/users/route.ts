@@ -142,14 +142,14 @@ export async function POST(request: NextRequest) {
         response = await apiService.fetchAllUsers(data);
         break;
       case "createNewUser":
-          response = await apiService.createNewUser(data);
-          break;
-      //   case "releaseLetterRequestClaim":
-      //     response = await ServerApiService.releaseLetterRequestClaim(data);
-      //     break;
-      //   case "getLetterRequestCustomerMandate":
-      //     response = await ServerApiService.getLetterRequestCustomerMandate(data);
-      //     break;
+        response = await apiService.createNewUser(data);
+        break;
+      case "updateUser":
+        response = await apiService.updateUser(data);
+        break;
+      case "deleteUser":
+        response = await apiService.deleteUser(data);
+        break;
       //   case "initiateLetterRequest":
       //     response = await ServerApiService.initiateLetterRequest(data);
       //     break;

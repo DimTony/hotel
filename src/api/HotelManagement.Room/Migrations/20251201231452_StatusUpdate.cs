@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HotelManagement.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class StatusUpdate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -39,6 +39,7 @@ namespace HotelManagement.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RoomNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RoomType = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     PricePerNight = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Capacity = table.Column<int>(type: "int", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
@@ -82,12 +83,12 @@ namespace HotelManagement.Migrations
 
             migrationBuilder.InsertData(
                 table: "Rooms",
-                columns: new[] { "Id", "Capacity", "Description", "IsAvailable", "PricePerNight", "RoomNumber", "RoomType" },
+                columns: new[] { "Id", "Capacity", "Description", "IsAvailable", "PricePerNight", "RoomNumber", "RoomType", "Status" },
                 values: new object[,]
                 {
-                    { 1, 1, "Single room with one bed.", true, 100m, "101", 0 },
-                    { 2, 2, "Double room with two beds.", true, 150m, "102", 1 },
-                    { 3, 4, "Luxury suite with living area.", true, 300m, "201", 2 }
+                    { 1, 1, "Single room with one bed.", true, 100m, "101", 0, 0 },
+                    { 2, 2, "Double room with two beds.", true, 150m, "102", 1, 0 },
+                    { 3, 4, "Luxury suite with living area.", true, 300m, "201", 2, 0 }
                 });
 
             migrationBuilder.CreateIndex(

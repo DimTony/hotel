@@ -5,6 +5,7 @@ namespace HotelManagement.DTOs
         public int Id { get; set; }
         public string RoomNumber { get; set; }
         public string RoomType { get; set; } // e.g., Single, Double, Suite
+        public string Status { get; set; }
         public decimal PricePerNight { get; set; }
         public int Capacity { get; set; }
         public bool IsAvailable { get; set; }
@@ -52,6 +53,7 @@ namespace HotelManagement.DTOs
     public class RoomFilterDTO : BaseFilter
     {
         public string? RoomType { get; set; } // e.g., Single, Double, Suite
+        public string? Status { get; set; } 
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public int? MinCapacity { get; set; }
