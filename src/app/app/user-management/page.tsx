@@ -11,6 +11,8 @@ import Image from "next/image";
 import { UserFormModal } from "../components/UserManagement/AddEditForm";
 import { toast } from "sonner";
 import { useStatusModal } from "@/hooks/useStatusModal";
+import { DeleteConfirmModal } from "../components/UserManagement/Delete";
+import { useIsAdmin } from "@/hooks/useRoles";
 
 interface UserFilters {
   // status: string;
@@ -36,13 +38,18 @@ interface User {
  * This demonstrates the clean, reusable pattern for handling paginated data.
  */
 const UserManagement = () => {
-  const { fetchAllUsers, createNewUser } = useUserService();
+  const { fetchAllUsers, createNewUser, updateUser, deleteUser } =
+    useUserService();
   const { openConfirmationModal } = useConfirmationModal();
   const { showStatus, closeStatus } = useStatusModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const isAdmin = useIsAdmin()
+
   // Use the reusable paginated data hook
   const {
     data: users,
@@ -67,6 +74,7 @@ const UserManagement = () => {
     },
   });
 
+
   // Fetch data when component mounts or page changes
   useEffect(() => {
     fetchData();
@@ -78,9 +86,6 @@ const UserManagement = () => {
       ...prev,
       search: searchInput,
     }));
-
-    // setCurrentPage(1);
-    // fetchData(); // force reload with new filters
   };
 
   const handleResetSearch = () => {
@@ -90,10 +95,6 @@ const UserManagement = () => {
       ...filters,
       search: "",
     });
-
-    // setCurrentPage(1);
-
-    // fetchData(); // refresh table with no search
   };
 
   const handleSearchInput = (value: string) => {
@@ -112,60 +113,41 @@ const UserManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (user: User) => {
-    openConfirmationModal({
-      title: "Add New User?",
-      description: "Please confirm you want to add this new user.",
-      icon: (
-        <Image src="/icons/Infoicon.svg" alt="info" width={40} height={40} />
-      ),
-      confirmText: "Yes, Confirm",
-      cancelText: "Cancel",
-      onConfirm: async () => {
-        try {
-          // const result = await addNewUser(values);
-          const result: any = {};
-          // setSubmitting(false);
-
-          // console.log('RRREEEEE', result)
-
-          if (result.statusCode !== 200) {
-            return {
-              success: false,
-              displayText:
-                result.message || "Failed to save changes. Please try again.",
-              buttonText: "Close",
-            };
-          } else {
-            // resetForm();
-            return {
-              success: true,
-              displayText: result?.message || "User created successfully!",
-              buttonText: "Close",
-              icon: (
-                <Image
-                  src="/icons/modalCheck.svg"
-                  width={80}
-                  height={80}
-                  alt=""
-                />
-              ),
-              redirectPath: "/user-management/user-directory",
-            };
-          }
-        } catch (error) {
-          console.error("Error saving changes:", error);
-          // setSubmitting(false);
-          return {
-            success: false,
-            displayText: "Failed to save changes. Please try again.",
-            buttonText: "Close",
-          };
-        }
-      },
-    });
+  const handleDeleteUser = (user: User) => {
+    //  setModalMode("edit");
+    setSelectedUser(user);
+    setIsDeleteModalOpen(true);
   };
 
+  const handleDeleteConfirm = async (userId: number) => {
+    try {
+      const response = await deleteUser(userId);
+
+      // console.log("Update RESPONSE:", response);
+
+      if (!response.success) {
+        throw new Error(response.message || "Operation failed");
+      }
+      setIsModalOpen(false);
+
+      showStatus({
+        success: true,
+        icon: "",
+        title: "Success!",
+        message: response.message || "Operation Successful",
+        onButtonClick: () => {
+          closeStatus();
+          refetch();
+        },
+        buttonText: "Close",
+      });
+    } catch (error: any) {
+      toast.error(
+        error.response.data.message || "An error occurred. Please try again."
+      );
+      throw error;
+    }
+  };
   const handleFormSubmit = async (userData: Partial<User>) => {
     try {
       if (modalMode === "create") {
@@ -192,7 +174,28 @@ const UserManagement = () => {
           buttonText: "Close",
         });
       } else {
-        console.log("Editing...", userData);
+        // console.log("Editing...", userData);
+
+        const response = await updateUser(userData);
+
+        console.log("Update RESPONSE:", response);
+
+        if (!response.success) {
+          throw new Error(response.message || "Operation failed");
+        }
+        setIsModalOpen(false);
+
+        showStatus({
+          success: true,
+          icon: "",
+          title: "Success!",
+          message: response.message || "Operation Successful",
+          onButtonClick: () => {
+            closeStatus();
+            refetch();
+          },
+          buttonText: "Close",
+        });
       }
 
       // refetch();
@@ -255,15 +258,15 @@ const UserManagement = () => {
       className: "py-3 px-2 text-right",
       render: (user: User) => (
         <div className="flex items-center justify-end gap-2">
-          <button
+          {/* <button
             className="flex items-center justify-center backdrop-blur-xl bg-white/10 hover:bg-white/65 rounded-full p-1.5 cursor-pointer text-blue-300 hover:text-blue-400 text-xs transition-all duration-300"
             title="View"
             onClick={() => console.log("View user:", user.id)}
           >
             <Eye size={12} />
-          </button>
+          </button> */}
           <button
-            className="flex items-center justify-center backdrop-blur-xl bg-white/10 hover:bg-white/65 rounded-full p-1.5 cursor-pointer text-blue-300 hover:text-blue-400 text-xs transition-all duration-300"
+            className="flex items-center justify-center backdrop-blur-xl bg-white/10 hover:bg-white/65 rounded-full p-1.5 cursor-pointer text-blue-300 hover:text-gray-700 text-xs transition-all duration-300"
             title="Edit"
             onClick={() => handleEditUser(user)}
           >
@@ -272,7 +275,7 @@ const UserManagement = () => {
           <button
             className="flex items-center justify-center backdrop-blur-xl bg-white/10 hover:bg-white/65 rounded-full p-1.5 cursor-pointer text-red-300 hover:text-red-400 text-xs transition-all duration-300"
             title="Delete"
-            onClick={() => handleDelete(user)}
+            onClick={() => handleDeleteUser(user)}
           >
             <Trash2 size={12} />
           </button>
@@ -322,14 +325,16 @@ const UserManagement = () => {
                 </button>
               )}
 
-              <button
-                onClick={handleAddUser}
-                className="flex items-center gap-1 px-2 py-1 backdrop-blur-xl bg-white/10 text-white 
+              {isAdmin && (
+                <button
+                  onClick={handleAddUser}
+                  className="flex items-center gap-1 px-2 py-1 backdrop-blur-xl bg-white/10 text-white 
       rounded-md text-xs hover:bg-white/65 hover:text-black cursor-pointer transition-all duration-300"
-              >
-                <Plus size={14} />
-                Add User
-              </button>
+                >
+                  <Plus size={14} />
+                  Add User
+                </button>
+              )}
             </div>
           </div>
 
@@ -360,6 +365,17 @@ const UserManagement = () => {
         onSubmit={handleFormSubmit}
         user={selectedUser}
         mode={modalMode}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete User"
+        message="Are you sure you want to delete this user?"
+        user={selectedUser}
+        confirmText="Delete User"
+        cancelText="Cancel"
       />
     </div>
   );

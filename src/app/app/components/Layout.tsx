@@ -29,14 +29,14 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
 
   // ✅ Check if user is SuperAdmin FIRST
   const isSuperAdmin = session?.user?.role?.some(
-    (ele) => ele === UserRoles.Admin
+    (ele) => ele === UserRoles.Guest
   );
 
   // If SuperAdmin, only show User Management
   if (isSuperAdmin) {
     return [
       {
-        label: "User Management",
+        label: "Guest",
         href: "/user-management",
         icon: (
           <Image
@@ -59,13 +59,17 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
 
   // For all other roles, show their respective menus
   return [
-    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin) ||
+    // session?.user?.role?.some((ele) => ele === UserRoles.accountOfficer) ||
+    session?.user?.role?.some((ele) => ele === UserRoles.Manager)
       ? //  ||
-        // session?.user?.role?.some((ele) => ele === UserRoles.accountOfficer) ||
-        // session?.user?.role?.some((ele) => ele === UserRoles.user)
         {
           label: "Dashboard",
-          href: "/dashboard",
+          href: session?.user?.role?.some((ele) => ele === UserRoles.Manager)
+            ? "/m/dashboard"
+            : session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+            ? "/a/dashboard"
+            : "/dashboard",
           icon: (
             <Image
               src="/icons/dashboard.svg"
@@ -80,14 +84,34 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
 
     session?.user?.role?.some((ele) => ele === UserRoles.Admin)
       ? //  ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.accountOfficer) ||
         // session?.user?.role?.some((ele) => ele === UserRoles.user)
+
         {
-          label: "Create Items",
-          href: "/create-items",
+          label: "Users",
+          href: "/users",
           icon: (
             <Image
-              src="/icons/create.svg"
-              alt="Create Items Icon"
+              src="/icons/userm.svg"
+              alt="User Icon"
+              width={20}
+              height={20}
+              className="sidebar-icon"
+            />
+          ),
+        }
+      : void 0,
+
+    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+      ? //  ||
+        // session?.user?.role?.some((ele) => ele === UserRoles.user)
+        {
+          label: "Rooms",
+          href: "/rooms",
+          icon: (
+            <Image
+              src="/icons/room.svg"
+              alt="Room Icon"
               width={20}
               height={20}
               className="sidebar-icon"
@@ -101,12 +125,12 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         // session?.user?.role?.some((ele) => ele === UserRoles.admin) ||
         // session?.user?.role?.some((ele) => ele === UserRoles.user)
         {
-          label: "View Deliverables",
-          href: "/view-deliverables",
+          label: "Reservations",
+          href: "/reservations",
           icon: (
             <Image
-              src="/icons/view-deliverables.svg"
-              alt="View Deliverables Icon"
+              src="/icons/reserve.svg"
+              alt="Reservation Icon"
               width={20}
               height={20}
               className="sidebar-icon"
@@ -119,11 +143,11 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
       ? //  ||
         // session?.user?.role?.some((ele) => ele === UserRoles.user)
         {
-          label: "Group Heads",
-          href: "/group-heads",
+          label: "Settings",
+          href: "/settings",
           icon: (
             <Image
-              src="/icons/group-head.svg"
+              src="/icons/settings.svg"
               alt="Group Heads Icon"
               width={20}
               height={20}
@@ -133,7 +157,7 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         }
       : void 0,
 
-    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+    session?.user?.role?.some((ele) => ele === UserRoles.Manager)
       ? {
           label: "Escalation Matrix",
           href: "/escalation-matrix",
@@ -149,7 +173,7 @@ const SIDEBAR_ITEMS = (session: Session): SidebarItem[] => {
         }
       : void 0,
 
-    session?.user?.role?.some((ele) => ele === UserRoles.Admin)
+    session?.user?.role?.some((ele) => ele === UserRoles.Manager)
       ? {
           label: "Audit Trail",
           href: "/audit-trails",
@@ -408,7 +432,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={`fixed top-0 left-0 h-screen backdrop-blur-xl bg-white/60 text-gray-800 border-r border-b border-gray-300 transition-all duration-300 ease-in-out z-50 flex flex-col ${
           isMobile
             ? `${isOpen ? "translate-x-0" : "-translate-x-full"} w-64`
-            : `${isCollapsed ? "w-16" : "w-[250px]"}`
+            : `${isCollapsed ? "w-16" : "w-[160px]"}`
         }`}
       >
         <div className="p-4 flex items-center justify-between shrink-0">
@@ -418,7 +442,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 session?.user?.role?.some(
                   (ele: string) => ele === UserRoles.Admin
                 )
-                  ? "/user-management"
+                  ? "/users"
                   : "/"
               }
             >
@@ -434,7 +458,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
           {!isMobile && (
             <button onClick={toggleCollapse}>
-              <Menu size={24} className="cursor-pointer hover:text-gray-600" />
+              <Menu
+                size={20}
+                className="cursor-pointer left-2 relative hover:text-gray-600"
+              />
             </button>
           )}
         </div>
@@ -568,7 +595,7 @@ const RootLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       />
       <div
         className={`flex-1 flex flex-col h-screen transition-all duration-300 ${
-          isMobile ? "ml-0" : isCollapsed ? "ml-16" : "ml-[250px]"
+          isMobile ? "ml-0" : isCollapsed ? "ml-16" : "ml-[160px]"
         }`}
       >
         <div className="sticky top-0 z-40 bg-white">

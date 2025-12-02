@@ -105,6 +105,12 @@ namespace HotelManagement.Repositories
                 query = query.Where(r => r.RoomType == parsedType);
             }
 
+            if (!string.IsNullOrWhiteSpace(filter.Status) &&
+                Enum.TryParse<RoomStatus>(filter.Status, true, out var parsedStatus))
+            {
+                query = query.Where(r => r.Status == parsedStatus);
+            }
+
             if (filter.MinPrice.HasValue)
             {
                 query = query.Where(r => r.PricePerNight >= filter.MinPrice.Value);

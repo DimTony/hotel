@@ -288,9 +288,9 @@ export const ConfirmationModal: React.FC = () => {
                 </div>
               )}
             </div>
-            <h3 className="text-xl font-bold mb-6">
+            <span className="text-xl font-bold mb-6">
               {actionResult?.displayText}
-            </h3>
+            </span>
             <Button
               onClick={() => {
                 if (actionResult?.redirectPath) {

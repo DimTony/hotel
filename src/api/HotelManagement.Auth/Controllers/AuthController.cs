@@ -39,6 +39,7 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+
     /// <summary>
     /// Login with email and password
     /// </summary>
@@ -62,6 +63,30 @@ public class AuthController : ControllerBase
 
         return Ok(result);
     }
+
+
+    [HttpPost("MockLogin")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> MockLogin()
+    {
+       
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _authService.MockLoginAsync();
+
+        if (!result.Success)
+        {
+            return Unauthorized(result);
+        }
+
+        return Ok(result);
+    }
+
 
     /// <summary>
     /// Refresh access token using refresh token
@@ -144,6 +169,65 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<PaginatedResponseDTO<UserDTO>>> GetUsers([FromQuery] UserFilterDTO filter)
     {
         var result = await _authService.GetFilteredUsersAsync(filter);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    [Authorize]
+    [ProducesResponseType(typeof(NonPaginatedResponseDTO<UserDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<NonPaginatedResponseDTO<UserDTO>>> GetUser(int id)
+    {
+        
+        var response = await _authService.GetUserByIdAsync(id);
+
+
+        if (!response.Success)
+        {
+            return NotFound(response);
+        }
+
+        return Ok(response);
+        
+    }
+
+    [HttpPut("Users")]
+    [ProducesResponseType(typeof(NonPaginatedResponseDTO<UserDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<NonPaginatedResponseDTO<UserDTO>>> Update([FromBody] UpdateUserRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _authService.UpdateUserAsync(request);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpDelete("Users")]
+    [ProducesResponseType(typeof(NonPaginatedResponseDTO<UserDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<NonPaginatedResponseDTO<UserDTO>>> Delete([FromQuery] DeleteUserRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var result = await _authService.DeleteUserAsync(request.Id);
 
         if (!result.Success)
         {

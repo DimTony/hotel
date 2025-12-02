@@ -9,6 +9,7 @@ namespace HotelManagement.Auth.Models
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public UserRole Role {  get; set; } = UserRole.Guest;
+        public UserStatus Status {  get; set; } = UserStatus.Active;
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastLoginAt { get; set; }
@@ -22,6 +23,13 @@ namespace HotelManagement.Auth.Models
         Admin,
         Manager,
         Guest
+    }
+
+    public enum UserStatus
+    {
+        Active,
+        Inactive,
+        Deleted
     }
 
 }

@@ -50,7 +50,7 @@ export function Table<T extends { id?: number | string }>({
   tableClassName = "w-full text-left text-sm text-white",
 }: PaginatedTableProps<T>) {
   return (
-    <div className="overflow-x-auto">
+    <div className="mb-4 overflow-x-auto">
       <table className={tableClassName}>
         <thead>
           <tr className="border-b border-white/20 text-gray-200">
