@@ -2,16 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { Modal } from "../Modal";
+import { User } from "@/lib/types";
 
-interface User {
-  id?: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  status?: string;
-  isActive?: boolean;
-}
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -79,6 +71,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     }
   };
 
+  const handleStatusToggle = () => {
+    setFormData((prev) => ({
+      ...prev,
+      status: prev.status === "Active" ? "Inactive" : "Active",
+    }));
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -98,7 +97,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     }
 
     // Password validation only if role != Guest
-    if (formData.role !== "Guest") {
+    if (mode === "create" && formData.role !== "Guest") {
       if (!formData.password?.trim()) {
         newErrors.password = "Password is required";
       } else if (formData.password.length < 6) {
@@ -227,9 +226,11 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             <option value="Receptionist" className="bg-gray-800">
               Receptionist
             </option>
-            <option value="Guest" className="bg-gray-800">
-              Guest
-            </option>
+            {mode === "create" && (
+              <option value="Guest" className="bg-gray-800">
+                Guest
+              </option>
+            )}
           </select>
           {errors.role && (
             <p className="mt-1 text-xs text-red-400">{errors.role}</p>
@@ -237,7 +238,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         </div>
 
         {/* Password Fields (only when role is NOT Guest) */}
-        {formData.role && formData.role !== "Guest" && (
+        {mode === "create" && formData.role && formData.role !== "Guest" && (
           <div className="grid grid-cols-2 gap-4">
             {/* Password */}
             <div>
@@ -279,6 +280,42 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   {errors.confirmPassword}
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {mode === "edit" && (
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-200 mb-1">
+              Status
+            </label>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={handleStatusToggle}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none  ${
+                  formData.status === "Active"
+                    ? "bg-green-50/80 border border-green-200"
+                    : "bg-red-50/80 border border-red-200"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.status === "Active"
+                      ? "translate-x-6"
+                      : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span
+                className={`text-sm font-medium ${
+                  formData.status === "Active"
+                    ? "text-green-600"
+                    : "text-red-400"
+                }`}
+              >
+                {formData.status === "Active" ? "Active" : "Inactive"}
+              </span>
             </div>
           </div>
         )}

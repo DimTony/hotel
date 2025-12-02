@@ -78,11 +78,13 @@ declare module "next-auth/jwt" {
 }
 
 export interface User {
-  id: string;
-  name: string;
-  username: string;
-  token?: string;
-  roles: UserRoles[];
+  id?: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  status?: string;
+  isActive?: boolean;
 }
 
 export enum UserRoles {
@@ -311,7 +313,6 @@ export interface DeliverableFormValues extends Deliverable {
   statusHistory: StatusChange[];
 }
 
-
 export interface UserTableFilter {
   pageNumber: number;
   pageSize: number;
@@ -325,10 +326,40 @@ export interface UserTableFilter {
   };
 }
 
+export interface RoomTableFilter {
+  pageNumber: number;
+  pageSize: number;
+  filter: {
+    search?: string;
+    status?: string;
+    roomType?: string;
+    roomNumber?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    checkInDate?: string;
+    checkOutDate?: string;
+  };
+}
+
 export interface CreateUserPayload {
   firstName?: string | undefined;
   lastName?: string | undefined;
   email?: string | undefined;
   role?: string | undefined;
   status?: string | undefined;
+}
+
+export interface Room {
+  id: number;
+  roomNumber: string;
+  roomType: string;
+  pricePerNight: number;
+  capacity: number;
+  isAvailable: boolean;
+  description: string;
+  // NEEDED
+  imageUrl?: string;
+  status?: string;
+  price?: number;
+  amenities?: string[];
 }

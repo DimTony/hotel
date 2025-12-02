@@ -78,7 +78,7 @@ export function TableControls({
 
   return (
     <div
-      className={`mt-4 flex items-center justify-between text-sm ${className}`}
+      className={`flex items-center justify-between text-sm ${className}`}
     >
       <div className="text-gray-300">
         Showing {startItem} to {endItem} of {totalCount} {itemName}

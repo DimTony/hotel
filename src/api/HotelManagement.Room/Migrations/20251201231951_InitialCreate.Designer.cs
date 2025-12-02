@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotelManagement.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251130184306_InitialCreate")]
+    [Migration("20251201231951_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -129,6 +129,10 @@ namespace HotelManagement.Migrations
                     b.Property<int>("RoomType")
                         .HasColumnType("int");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Rooms");
@@ -142,7 +146,8 @@ namespace HotelManagement.Migrations
                             IsAvailable = true,
                             PricePerNight = 100m,
                             RoomNumber = "101",
-                            RoomType = 0
+                            RoomType = 0,
+                            Status = "Available"
                         },
                         new
                         {
@@ -152,7 +157,8 @@ namespace HotelManagement.Migrations
                             IsAvailable = true,
                             PricePerNight = 150m,
                             RoomNumber = "102",
-                            RoomType = 1
+                            RoomType = 1,
+                            Status = "Available"
                         },
                         new
                         {
@@ -162,7 +168,8 @@ namespace HotelManagement.Migrations
                             IsAvailable = true,
                             PricePerNight = 300m,
                             RoomNumber = "201",
-                            RoomType = 2
+                            RoomType = 2,
+                            Status = "Available"
                         });
                 });
 

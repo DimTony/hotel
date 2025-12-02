@@ -42,5 +42,33 @@ export const userService = {
     }
   },
 
-  // ,
+  updateUser: async (payload: CreateUserPayload) => {
+    try {
+      const response = await api.post("", {
+        //   const { data } = await api.post("", {
+        action: "updateUser",
+        data: payload,
+      });
+      // console.log("response usuusdata:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
+    }
+  },
+
+  deleteUser: async (userId: number) => {
+    try {
+      const response = await api.post("", {
+        //   const { data } = await api.post("", {
+        action: "deleteUser",
+        data: { userId },
+      });
+      // console.log("response usuusdata:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
+    }
+  },
 };
